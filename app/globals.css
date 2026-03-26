@@ -1,26 +1,180 @@
-@import "tailwindcss";
+/* ─── Civic Complaint Portal — Design System ─────────────────────────────── */
 
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300&family=Familjen+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Light Theme (default) ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-display: 'Familjen Grotesk', sans-serif;
+  --font-body:    'Plus Jakarta Sans', sans-serif;
+
+  /* Blues */
+  --blue-50:  #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-400: #60a5fa;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --blue-900: #1e3a5f;
+
+  /* Oranges */
+  --orange-50:  #fff7ed;
+  --orange-100: #ffedd5;
+  --orange-400: #fb923c;
+  --orange-500: #f97316;
+  --orange-600: #ea580c;
+
+  /* Greens */
+  --green-50:  #f0fdf4;
+  --green-100: #dcfce7;
+  --green-400: #4ade80;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+
+  /* Neutrals */
+  --gray-50:  #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+
+  /* Semantic tokens - Light */
+  --bg:           #f8fafc;
+  --bg-card:      #ffffff;
+  --bg-subtle:    #f1f5f9;
+  --bg-input:     #ffffff;
+  --surface:      #ffffff;
+
+  --border:       #e2e8f0;
+  --border-focus: #3b82f6;
+  --border-strong:#cbd5e1;
+
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --text-inverse:   #ffffff;
+
+  --accent-primary:   #2563eb;
+  --accent-primary-h: #1d4ed8;
+  --accent-orange:    #f97316;
+  --accent-orange-h:  #ea580c;
+  --accent-green:     #16a34a;
+  --accent-green-h:   #15803d;
+
+  --glow-blue:   rgba(37, 99, 235, 0.15);
+  --glow-orange: rgba(249, 115, 22, 0.15);
+  --glow-green:  rgba(22, 163, 74, 0.15);
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  --shadow-lg:  0 10px 40px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.05);
+  --shadow-xl:  0 20px 60px rgba(0,0,0,0.12);
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-2xl:32px;
+
+  --status-open:       #f97316;
+  --status-open-bg:    #fff7ed;
+  --status-progress:   #2563eb;
+  --status-progress-bg:#eff6ff;
+  --status-resolved:   #16a34a;
+  --status-resolved-bg:#f0fdf4;
+  --status-rejected:   #dc2626;
+  --status-rejected-bg:#fef2f2;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ── Dark Theme ── */
+[data-theme="dark"] {
+  --bg:           #0b1120;
+  --bg-card:      #111827;
+  --bg-subtle:    #1e2a3a;
+  --bg-input:     #1a2436;
+  --surface:      #162032;
+
+  --border:       #1e2d45;
+  --border-focus: #3b82f6;
+  --border-strong:#2a3d5a;
+
+  --text-primary:   #f0f6ff;
+  --text-secondary: #8ba3c0;
+  --text-muted:     #4a6480;
+  --text-inverse:   #0f172a;
+
+  --accent-primary:   #3b82f6;
+  --accent-primary-h: #60a5fa;
+  --accent-orange:    #fb923c;
+  --accent-orange-h:  #fdba74;
+  --accent-green:     #22c55e;
+  --accent-green-h:   #4ade80;
+
+  --glow-blue:   rgba(59, 130, 246, 0.2);
+  --glow-orange: rgba(251, 146, 60, 0.18);
+  --glow-green:  rgba(34, 197, 94, 0.18);
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.35);
+  --shadow-lg:  0 10px 40px rgba(0,0,0,0.4);
+  --shadow-xl:  0 20px 60px rgba(0,0,0,0.5);
+
+  --status-open:       #fb923c;
+  --status-open-bg:    rgba(249,115,22,0.12);
+  --status-progress:   #60a5fa;
+  --status-progress-bg:rgba(59,130,246,0.12);
+  --status-resolved:   #4ade80;
+  --status-resolved-bg:rgba(34,197,94,0.12);
+  --status-rejected:   #f87171;
+  --status-rejected-bg:rgba(239,68,68,0.12);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  height: 100%;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+a { color: inherit; text-decoration: none; }
+button, input, textarea, select { font-family: var(--font-body); }
+img, svg { display: block; }
+ul { list-style: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-subtle); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
+
+/* Utility */
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+
+/* Animations */
+@keyframes fadeUp   { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+@keyframes slideInL { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:translateX(0); } }
+@keyframes slideInR { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+@keyframes spin     { to { transform: rotate(360deg); } }
+@keyframes pulse    { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+@keyframes shimmer  { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
+@keyframes rotateBorder { to { transform: rotate(360deg); } }
