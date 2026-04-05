@@ -11,6 +11,8 @@
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![NextAuth.js](https://img.shields.io/badge/NextAuth.js-v5-purple?style=for-the-badge&logo=auth0&logoColor=white)](https://authjs.dev/)
+[![Fast2SMS](https://img.shields.io/badge/Fast2SMS-OTP-orange?style=for-the-badge&logo=twilio&logoColor=white)](https://www.fast2sms.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 <br />
@@ -37,12 +39,14 @@ The **Government Complaint Portal** is a full-stack web application that bridges
 
 | Feature | Description |
 |--------|-------------|
-| 🔐 **Authentication** | Secure login/signup for civilians and admins |
+| 🔐 **Google OAuth** | One-click sign-in with Google for civilians and admins via NextAuth.js v5 |
+| 🪪 **Aadhaar OTP Verification** | Real SMS OTP sent to Aadhaar-linked mobile via Fast2SMS, validated with Verhoeff checksum |
 | 📝 **Complaint Filing** | Easy-to-use forms for submitting detailed complaints |
 | 📬 **Status Tracking** | Real-time updates on complaint progress |
-| 🛠️ **Admin Dashboard** | Manage and respond to all citizen complaints |
-| 📈 **Data Visualization** | Interactive charts to analyze complaint patterns |
-| 🌐 **Responsive Design** | Works seamlessly across devices |
+| 🛠️ **Admin Dashboard** | Manage and respond to all citizen complaints with role-based access |
+| 🛡️ **Admin Google Flow** | Post-OAuth profile completion step enforcing Employee ID + Department |
+| 📈 **Data Visualization** | Interactive 3D charts powered by the priority score engine |
+| 🌐 **Responsive Design** | Works seamlessly across all devices |
 
 ---
 
@@ -50,16 +54,27 @@ The **Government Complaint Portal** is a full-stack web application that bridges
 
 ```
 📁 app/
-├── 🔒 auth/          # Authentication pages (login, signup)
-├── 👤 civilian/      # Civilian dashboard & complaint management
-├── 🛡️ admin/         # Admin panel for complaint handling
-├── 🏠 home/          # Landing and home pages
-├── 📊 visulization/  # Charts & analytics
-├── 🔧 components/    # Reusable UI components
-├── 🪝 hooks/         # Custom React hooks
-├── 📚 lib/           # Utility functions & helpers
-├── 🔗 context/       # Global state / context providers
-└── 🏷️ types/         # TypeScript type definitions
+├── 🔒 auth/
+│   ├── civilian/         # Civilian login (Email / Aadhaar OTP / Google)
+│   └── admin/            # Admin login (Employee ID / Google + profile step)
+├── 👤 civilian/          # Civilian dashboard & complaint management
+├── 🛡️ admin/             # Admin panel for complaint handling
+├── 🏠 home/              # Landing and home pages
+├── 📊 visulization/      # Charts & analytics (fulmula.py)
+├── 🔧 components/        # Reusable UI components
+├── 🪝 hooks/             # Custom React hooks
+├── 📚 lib/
+│   ├── data.ts           # Mock data & utility helpers
+│   └── aadhaar.ts        # Verhoeff checksum validator
+├── 🔗 context/
+│   ├── AuthContext.tsx    # Global session state (localStorage)
+│   └── NextAuthProvider.tsx  # NextAuth SessionProvider wrapper
+├── 🏷️ types/             # TypeScript type definitions
+└── 🔌 api/
+    ├── auth/[...nextauth]/   # Google OAuth callback handler
+    └── aadhaar/
+        ├── send-otp/     # SMS OTP dispatch via Fast2SMS
+        └── verify-otp/   # OTP verification with attempt limiting
 ```
 
 ---
@@ -86,6 +101,29 @@ cd Goverment-complain-
 npm install
 ```
 
+### Environment Setup
+
+Create a `.env.local` file in the root directory with the following keys:
+
+```env
+# ── Google OAuth (https://console.cloud.google.com/)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# ── NextAuth
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-random-secret   # node -e "require('crypto').randomBytes(32).toString('base64')"
+
+# ── Fast2SMS OTP Gateway (https://www.fast2sms.com/)
+FAST2SMS_API_KEY=your-fast2sms-api-key
+
+# ── UIDAI (Production only — requires AUA license)
+# UIDAI_API_URL=https://auth.uidai.gov.in/1.6/
+# UIDAI_API_KEY=your-uidai-api-key
+```
+
+> 💡 **Development mode:** If `FAST2SMS_API_KEY` is not set, OTPs are printed to the server console so you can test without an SMS account.
+
 ### Running the Development Server
 
 ```bash
@@ -111,10 +149,59 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
 | **Framework** | [Next.js 15](https://nextjs.org/) (App Router) |
 | **Language** | [TypeScript](https://www.typescriptlang.org/) |
 | **Styling** | [Tailwind CSS](https://tailwindcss.com/) |
+| **Authentication** | [NextAuth.js v5](https://authjs.dev/) (Google OAuth, JWT sessions) |
+| **SMS Gateway** | [Fast2SMS](https://www.fast2sms.com/) (Aadhaar OTP delivery) |
+| **OTP Validation** | Verhoeff checksum algorithm (same as UIDAI) |
 | **Fonts** | [Geist](https://vercel.com/font) via `next/font` |
-| **Linting** | ESLint with Next.js config |
 | **Analytics Engine** | Python 3 + [Streamlit](https://streamlit.io/) |
 | **Data & Plotting** | NumPy + Matplotlib (3D Surface & Scatter) |
+
+---
+
+## 🔐 Authentication System
+
+The portal implements **three independent sign-in methods** for civilians and a **hardened two-step flow** for administrators.
+
+### 👤 Civilian Authentication
+
+| Method | Flow |
+|--------|------|
+| ✉️ **Email / Password** | Standard form → session stored in `localStorage` via `AuthContext` |
+| 🔵 **Google OAuth** | `signIn('google')` → NextAuth callback → session synced into `AuthContext` |
+| 🪪 **Aadhaar + OTP** | Verhoeff validation → Fast2SMS sends real OTP to mobile → `/api/aadhaar/verify-otp` |
+
+**Aadhaar verification flow:**
+```
+User enters Aadhaar number + linked mobile
+       ↓
+Verhoeff checksum validates number instantly (client-side)
+       ↓
+POST /api/aadhaar/send-otp → Fast2SMS API
+       ↓
+Real SMS OTP delivered to user's phone
+       ↓
+User enters OTP → POST /api/aadhaar/verify-otp
+       ↓  (5 attempts max, 10 min TTL, one-time use)
+Logged in as "Aadhaar User ****XXXX"
+```
+
+### 🛡️ Admin Authentication
+
+| Method | Flow |
+|--------|------|
+| 🪪 **Employee ID / Password + 2FA** | Standard form → 6-digit OTP step → admin session |
+| 🔵 **Google OAuth + Profile Step** | Google sign-in → **mandatory** Employee ID + Department + Auth Code form → admin session |
+
+> **Why the extra step for admins?** Google OAuth alone doesn't verify government employment. The profile completion step ensures every admin account is tied to a real Employee ID and department — admins cannot bypass this with Google.
+
+### 🔒 Security Details
+
+- **Rate limiting:** Max 3 OTP requests per Aadhaar per 10 minutes
+- **Attempt limiting:** Max 5 wrong OTP guesses before lockout
+- **One-time OTPs:** Each OTP is consumed on first successful use
+- **10-minute TTL:** OTPs expire automatically
+- **No Aadhaar storage:** Aadhaar numbers are never persisted — only used in-flight for OTP dispatch
+- **Verhoeff checksum:** Structurally invalid Aadhaar numbers are rejected before any API call
 
 ---
 
