@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { signIn, useSession } from 'next-auth/react';
 import { ThemeToggle } from '@/app/components/ui';
 import { validateEmail, validatePhone, maskAadhaar } from '@/app/lib/data';
 import { useAuth, nameFromEmail } from '@/app/context/AuthContext';
@@ -14,8 +15,10 @@ type CivMethod = 'email' | 'aadhaar' | 'google';
 export default function CivilianAuthClient() {
   const router = useRouter();
   const { setSession } = useAuth();
+  const { data: googleSession, status: googleStatus } = useSession();
   const [tab, setTab]       = useState<AuthTab>('login');
   const [method, setMethod] = useState<CivMethod>('email');
+  const [googlePending, setGooglePending] = useState(false);
 
   // Login
   const [loginEmail, setLoginEmail] = useState('');
@@ -64,6 +67,20 @@ export default function CivilianAuthClient() {
     fn();
   }, []);
 
+  // ── Sync NextAuth Google session into our AuthContext after OAuth redirect ──
+  useEffect(() => {
+    if (!googlePending) return;
+    if (googleStatus === 'loading') return;
+    if (googleStatus === 'authenticated' && googleSession?.user) {
+      const { name, email } = googleSession.user;
+      loginAs(
+        name  ?? nameFromEmail(email ?? ''),
+        email ?? 'google-user@civic.gov',
+      );
+      setGooglePending(false);
+    }
+  }, [googleStatus, googleSession, googlePending, loginAs]);
+
   const handleEmailLogin = useCallback(async () => {
     const e: Record<string, string> = {};
     if (!validateEmail(loginEmail)) e.loginEmail = 'Enter a valid email address';
@@ -85,9 +102,11 @@ export default function CivilianAuthClient() {
     await simulate(() => loginAs(suName.trim(), suEmail, suPhone));
   }, [suName, suEmail, suPhone, suPwd, suConfirm, simulate, loginAs]);
 
-  const handleGoogleLogin = useCallback(async () => {
-    await simulate(() => loginAs('Google User', 'google-user@civic.gov'));
-  }, [simulate, loginAs]);
+  // Kick off real Google OAuth — NextAuth handles the redirect/callback
+  const handleGoogleLogin = useCallback(() => {
+    setGooglePending(true);
+    signIn('google', { callbackUrl: '/auth/civilian' });
+  }, []);
 
   const handleAadhaarSend = useCallback(async () => {
     const raw = aadhaar.replace(/\s/g, '');

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { NextAuthProvider } from './context/NextAuthProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -35,11 +36,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}} />
       </head>
       <body>
-        <AuthProvider>
-          <ThemeProvider>
-            {children}
-          </ThemeProvider>
-        </AuthProvider>
+        <NextAuthProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              {children}
+            </ThemeProvider>
+          </AuthProvider>
+        </NextAuthProvider>
       </body>
     </html>
   );
